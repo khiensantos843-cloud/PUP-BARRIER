@@ -76,6 +76,7 @@ This system is built with strict multi-layered security so unauthorized individu
 3. Open the file [`supabase/schema.sql`](file:///d:/CAPSTONE%20TANGINA/supabase/schema.sql) in this repository and copy all its contents.
 4. Paste the SQL into the Supabase SQL Editor and click **Run**.
    * This creates all tables (`profiles`, `students`, `vehicles`, `gates`, `access_logs`, `student_presence`, `gate_actions`), indexes, RLS policies, realtime publications, and the atomic `process_gate_scan` stored procedure.
+   * After updating an existing deployment, run the schema again so the scan procedure is updated. Scans sent with direction `both` alternate entry and exit based on the student's current presence; scans within the 3.5-second duplicate cooldown are still rejected.
 5. Go to **Project Settings → API** to copy:
    * **Project URL**
    * **Project API Keys (`anon` / public)**
@@ -121,6 +122,11 @@ This system is built with strict multi-layered security so unauthorized individu
    * **Administrator**: `admin@pup.edu.ph` / `PUPBataan@123`
    * **Gate Guard**: `guard@pup.edu.ph` / `guard123`
 
+When Supabase credentials are not configured, student registration uses local demo storage in
+`data/db.json`. These records stay on the development machine and are not synced to Supabase or
+available to a production deployment. Configure the Supabase variables above for shared or
+production data.
+
 ---
 
 ## 🔌 Step 4: Raspberry Pi Hardware Agent (`gate-agent/`)
@@ -137,6 +143,7 @@ python app.py
 
 * **Online mode**: Sends card/QR scans in real-time to your Netlify deployment (`POST /api/scan`).
 * **Offline fallback**: If internet is down, automatically checks local SQLite (`authorized_students`) and pulses the relay immediately. Buffered scans upload automatically once internet is restored.
+* **Automatic direction**: `GATE_DIRECTION=both` (the default) records the first valid barcode scan as entry and the next valid scan as exit. Use `entry` or `exit` for a dedicated one-way gate.
 
 ---
 
